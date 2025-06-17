@@ -75,16 +75,16 @@ root
          │                        │                        │
          └────────────────────────┼────────────────────────┘
                                   │
-┌─────────────────┐               │              ┌─────────────────┐
-│  TRANSACTIONS   │               │              │   FARE_MATRIX   │
-├─────────────────┤               │              ├─────────────────┤
-│ id (PK)         │               │              │ id (PK)         │
-│ card_id (FK)    │──────────────┘               │ from_terminal   │
-│ entry_terminal  │                              │ to_terminal     │
-│ exit_terminal   │                              │ fare_amount     │
-│ entry_time      │                              │ created_at      │
-│ exit_time       │                              │ updated_at      │
-│ fare_amount     │                              └─────────────────┘
+┌─────────────────┐              │              ┌─────────────────┐
+│  TRANSACTIONS   │              │              │   FARE_MATRIX   │
+├─────────────────┤              │              ├─────────────────┤
+│ id (PK)         │              │              │ id (PK)         │
+│ card_id (FK)    │──────────────┘              │ from_terminal   │
+│ entry_terminal  │                             │ to_terminal     │
+│ exit_terminal   │                             │ fare_amount     │
+│ entry_time      │                             │ created_at      │
+│ exit_time       │                             │ updated_at      │
+│ fare_amount     │                             └─────────────────┘
 │ status          │
 │ created_at      │     ┌─────────────────┐
 │ updated_at      │     │ VALIDATION_GATES│
@@ -97,7 +97,7 @@ root
          │              │ created_at      │
          │              │ updated_at      │
          │              └─────────────────┘
-         │                       │
+         │                        │
 ┌─────────────────┐              │
 │ OFFLINE_QUEUE   │              │
 ├─────────────────┤              │
@@ -108,6 +108,7 @@ root
 │ is_synced       │
 │ created_at      │
 └─────────────────┘
+
 # Business Logic and Flow
 
 ## Design Description (Online Mode)
