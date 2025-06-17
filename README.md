@@ -10,7 +10,6 @@ A comprehensive public transportation e-ticketing system built with Go, featurin
 - 📊 Fare calculation matrix
 - 🔄 Offline transaction sync
 - 🛡️ Role-based access control
-- 🐳 Docker support
 - 📝 Comprehensive API documentation
 
 ## Architecture
@@ -59,6 +58,110 @@ root
         └── custom_error.go
 ```
 
+## Database Schema
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     USERS       │     │    TERMINALS    │     │     CARDS       │
+├─────────────────┤     ├─────────────────┤     ├─────────────────┤
+│ id (PK)         │     │ id (PK)         │     │ id (PK)         │
+│ username        │     │ name            │     │ card_number     │
+│ email           │     │ code            │     │ balance         │
+│ password_hash   │     │ location        │     │ user_id (FK)    │
+│ role            │     │ is_active       │     │ is_active       │
+│ created_at      │     │ created_at      │     │ created_at      │
+│ updated_at      │     │ updated_at      │     │ updated_at      │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+         │                        │                        │
+         │                        │                        │
+         └────────────────────────┼────────────────────────┘
+                                  │
+┌─────────────────┐               │              ┌─────────────────┐
+│  TRANSACTIONS   │               │              │   FARE_MATRIX   │
+├─────────────────┤               │              ├─────────────────┤
+│ id (PK)         │               │              │ id (PK)         │
+│ card_id (FK)    │──────────────┘               │ from_terminal   │
+│ entry_terminal  │                              │ to_terminal     │
+│ exit_terminal   │                              │ fare_amount     │
+│ entry_time      │                              │ created_at      │
+│ exit_time       │                              │ updated_at      │
+│ fare_amount     │                              └─────────────────┘
+│ status          │
+│ created_at      │     ┌─────────────────┐
+│ updated_at      │     │ VALIDATION_GATES│
+└─────────────────┘     ├─────────────────┤
+         │              │ id (PK)         │
+         │              │ terminal_id (FK)│
+         │              │ gate_code       │
+         │              │ is_active       │
+         │              │ last_sync       │
+         │              │ created_at      │
+         │              │ updated_at      │
+         │              └─────────────────┘
+         │                       │
+┌─────────────────┐              │
+│ OFFLINE_QUEUE   │              │
+├─────────────────┤              │
+│ id (PK)         │              │
+│ gate_id (FK)    │──────────────┘
+│ transaction_data│
+│ timestamp       │
+│ is_synced       │
+│ created_at      │
+└─────────────────┘
+# Business Logic and Flow
+
+## Design Description (Online Mode)
+
+1. User Journey:
+
+- User taps prepaid card at validation gate (check-in)
+- System records entry terminal, timestamp, card ID
+- User travels to destination
+- User taps card at exit validation gate (check-out)
+- System calculates fare based on entry/exit terminals
+- Fare is deducted from prepaid card balance
+
+
+2. System Components:
+
+- Validation Gates: Hardware devices at each terminal with card readers
+- API Gateway: Handles all requests from validation gates
+- Authentication Service: Manages JWT tokens for gate authentication
+- Database Service: Stores transactions, terminals, card data
+- Fare Calculation Engine: Determines fare based on terminal matrix
+
+
+3. Data Flow (Online):
+Gate → API Gateway → Auth Check → Business Logic → Database → Response
+
+
+## Design Description (Offline Mode)
+
+1. Offline Capability:
+
+- Each validation gate has local storage for transactions
+- Pre-loaded fare matrix and terminal data
+- Cached card balances (last known state)
+- Local transaction queue
+
+
+2. Offline Process:
+
+- Gate validates card locally using cached data
+- Transactions stored in local queue with timestamps
+- Fare calculated using local fare matrix
+- Balance updated locally (optimistic approach)
+
+
+3. Sync Process (When connection restored):
+
+- Gate sends all queued transactions to server
+- Server validates and processes transactions chronologically
+- Conflicts resolved (insufficient balance, duplicate transactions)
+- Updated card balances and fare matrices pushed to gates
+
+  ------
+
 ## Getting Started
 
 ### Prerequisites
@@ -86,29 +189,6 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
-4. Start PostgreSQL and run migrations:
-```bash
-make docker-up
-make migrate
-```
-
-5. Run the application:
-```bash
-make run
-```
-
-### Docker Development
-
-```bash
-# Start all services
-make docker-up
-
-# View logs
-make logs
-
-# Stop services
-make docker-down
-```
 
 ## API Endpoints
 
