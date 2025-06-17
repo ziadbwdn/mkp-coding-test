@@ -1,4 +1,4 @@
-# Transportation E-Ticketing API
+# Public Transportation E-Ticketing System
 
 A comprehensive public transportation e-ticketing system built with Go, featuring offline capability and JWT authentication.
 
